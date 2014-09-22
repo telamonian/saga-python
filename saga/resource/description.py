@@ -128,9 +128,9 @@ class Description (sa.Attributes) :
 
     # --------------------------------------------------------------------------
     #
-    @rus.takes   ('Description', 
-                  'Description')
-    @rus.returns ('Description')
+ #  @rus.takes   ('Description', 
+ #                'Description')
+ #  @rus.returns ('Description')
     def __deepcopy__ (self, other) :
         """
         An alias for `clone()`.
@@ -139,9 +139,9 @@ class Description (sa.Attributes) :
 
     # --------------------------------------------------------------------------
     #
-    @rus.takes   ('Description', 
-                  rus.optional ('Description'))
-    @rus.returns ('Description')
+  # @rus.takes   ('Description', 
+  #               rus.optional ('Description'))
+  # @rus.returns ('Description')
     def clone (self, other=None) :
         """ 
         clone()
@@ -182,8 +182,7 @@ class ComputeDescription (Description) :
                 raise se.BadParameter ("Cannot create ComputeResource with type '%s'" \
                                     % d[const.RTYPE])
 
-        self._descr = super  (ComputeDescription, self)
-        self._descr.__init__ (d)
+        super (ComputeDescription, self).__init__ (d)
 
         self.rtype = const.COMPUTE
 
@@ -209,8 +208,7 @@ class StorageDescription (Description) :
                 raise se.BadParameter ("Cannot create StorageResource with type '%s'" \
                                     % d[const.RTYPE])
 
-        self._descr = super  (StorageDescription, self)
-        self._descr.__init__ (d)
+        super (StorageDescription, self).__init__ (d)
 
         self.rtype = const.STORAGE
 
@@ -235,8 +233,7 @@ class NetworkDescription (Description) :
                 raise se.BadParameter ("Cannot create NetworkResource with type '%s'" \
                                     % d[const.RTYPE])
 
-        self._descr = super  (NetworkDescription, self)
-        self._descr.__init__ ()
+        super (NetworkDescription, self).__init__ (d)
 
         self.rtype = const.NETWORK
 

@@ -115,6 +115,8 @@ def usage (msg = None) :
     if  msg :
         print "\n    Error: %s\n"  %  msg
 
+    prog = sys.argv[0]
+
     print """
     Usage:
 
@@ -133,7 +135,7 @@ def usage (msg = None) :
        EC2_KEYPAIR    : public ssh key for VM access
 
 
-    """
+    """ % (prog, prog, prog, prog)
 
     if msg : sys.exit (-1)
     else   : sys.exit ( 0)
@@ -230,16 +232,16 @@ if  '-l' in args :
     descr = None
     ispublic = None
 
-    for osi in rm.list_images () :
-        descr = rm.get_image (osi)
-
-        if descr['ispublic'] == 'true' :
-            ispublic = 'public'
-        else:
-            ispublic = 'private'
-
-        print "  %s - %s, %s, %s" % (osi, descr['name'], ispublic,
-                                     descr['state'])
+  # for osi in rm.list_images () :
+  #     descr = rm.get_image (osi)
+  #
+  #     if descr['ispublic'] == 'true' :
+  #         ispublic = 'public'
+  #     else:
+  #         ispublic = 'private'
+  #
+  #     print "  %s - %s, %s, %s" % (osi, descr['name'], ispublic,
+  #                                  descr['state'])
 
     print
     sys.exit (0)
@@ -260,7 +262,8 @@ elif  '-c' in args :
         # the ones listed above.  We pick a small VM and a plain Ubuntu image...
         cd = saga.resource.ComputeDescription ()
         cd.image    = image
-        cd.template = 'Small Instance'
+      # cd.template = 'Small Instance'
+        cd.template = 'Compute Optimized Eight Extra Large Instance'
 
         # create a VM instance with that description, and inspect it for some
         # detailes

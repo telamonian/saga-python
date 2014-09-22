@@ -39,6 +39,7 @@ _ADAPTOR_CAPABILITIES  = {
                           saga.resource.MACHINE_ARCH  ,
                           saga.resource.SIZE          ,
                           saga.resource.MEMORY        ,
+                          saga.resource.DYNAMIC       ,
                           saga.resource.ACCESS       ],
     "res_attributes"   : [saga.resource.RTYPE         ,
                           saga.resource.TEMPLATE      ,
@@ -686,6 +687,11 @@ class EC2ResourceManager (saga.adaptors.cpi.resource.Manager) :
             if  not rd.image in self.images_dict : 
                 self._refresh_images (rd.image)
 
+            if  not rd.image in self.images_dict : 
+                import pprint
+                pprint.pprint (self.images_dict)
+                raise ('image %s not known' % rd.image)
+
 
             # FIXME: interpret / verify size
 
@@ -710,6 +716,8 @@ class EC2ResourceManager (saga.adaptors.cpi.resource.Manager) :
 
         except Exception as e :
             # FIXME: translate errors more sensibly
+            import traceback
+            traceback.print_exc ()
             raise saga.NoSuccess ("Failed with %s" % e)
 
         if  resource_info :
@@ -855,7 +863,7 @@ class EC2ResourceManager (saga.adaptors.cpi.resource.Manager) :
         if  not img_id in self.images_dict.keys () :
             raise saga.BadParameter ("unknown image %s" % img_id)
 
-        descr = dict(self.images_dict[img_id].extra)
+        descr = dict(self.images_dict.get ([img_id]))
 
         if  not 'name' in descr :
             descr['name'] = self.images_dict[img_id].name
@@ -964,7 +972,7 @@ class EC2ResourceCompute (saga.adaptors.cpi.resource.Compute) :
 
             self.resource = nodes[0]
 
-            if  'status' in self.resource.extra :
+            if  'status'  in  self.resource.extra :
                 self.detail = self.resource.extra['status']
 
             # FIXME: move state translation to adaptor

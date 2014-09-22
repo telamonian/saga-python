@@ -246,10 +246,11 @@ class Manager (sb.Base, async.Async) :
             if spec.rtype is None:
                 raise se.BadParameter ("No resource type defined in resource description")
     
-            spec_copy = descr.Description ()
-            spec._attributes_deep_copy (spec_copy)
-
-            return self._adaptor.acquire (spec_copy, ttype=ttype)
+          # spec_copy = descr.Description ()
+          # spec._attributes_deep_copy (spec_copy)
+          # 
+          # return self._adaptor.acquire (spec_copy, ttype=ttype)
+            return self._adaptor.acquire (spec, ttype=ttype)
 
 
     # --------------------------------------------------------------------------
