@@ -251,8 +251,8 @@ class PTYShell (object) :
     #
     def _trace (self, msg) :
 
-      # print " === %5d : %s : %s" % (self._pty_id, self.pty_shell, msg)
-        pass
+        if 'RADICAL_SAGA_PTY_TRACE' in os.environ:
+            print " === %5d : %s : %s" % (self._pty_id, self.pty_shell, msg)
 
 
     # ----------------------------------------------------------------
@@ -822,7 +822,7 @@ class PTYShell (object) :
 
         try :
 
-          # self._trace ("write     : %s -> %s" % (src, tgt))
+            self._trace ("write     : %s -> %s" % (src, tgt))
 
             # FIXME: make this relative to the shell's pwd?  Needs pwd in
             # prompt, and updating pwd state on every find_prompt.
@@ -856,7 +856,7 @@ class PTYShell (object) :
 
         try :
 
-          # self._trace ("read      : %s" % src)
+            self._trace ("read      : %s" % src)
 
             # FIXME: make this relative to the shell's pwd?  Needs pwd in
             # prompt, and updating pwd state on every find_prompt.
