@@ -75,6 +75,19 @@ THREADS_PER_PROCESS   = 'ThreadsPerProcess';   """ :todo: docstring """
 JOB_CONTACT           = 'JobContact';          """ :todo: docstring """
 NAME                  = 'Name';                """ The name of your job """ # non-GFD.90
 
+# attributes added by Telamonian to help use some of the slurm SBATCH keywords
+EXCLUSIVE             = 'Exclusive';           """ If true, the job can not 
+                                                   share nodes """
+EXPORT                = 'Export';              """ Identify which env variables
+                                                   are propagated to the 
+                                                   job """
+MAIL_TYPE             = 'MailType';            """ Notify user by email when 
+                                                   certain event occur """
+# NODES                 = 'Nodes';               """ The number of nodes required
+#                                                    by this job """
+# NTASKS_PER_NODE       = 'NTasksPerNode';       """ The number of (slurm) tasks
+#                                                    to run on each nodes """
+
 
 ################################################################################
 # Job attributes:

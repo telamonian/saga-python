@@ -74,7 +74,10 @@ _ADAPTOR_CAPABILITIES  = {
                           saga.job.CANDIDATE_HOSTS,
                           saga.job.QUEUE,
                           saga.job.PROJECT,
-                          saga.job.JOB_CONTACT],
+                          saga.job.JOB_CONTACT,
+                          saga.job.EXCLUSIVE, 
+                          saga.job.EXPORT,
+                          saga.job.MAIL_TYPE],
 
     "job_attributes"   : [saga.job.EXIT_CODE,
                           saga.job.EXECUTION_HOSTS,
@@ -427,6 +430,9 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
         job_memory = None
         job_contact = None
         candidate_hosts = None
+        exclusive = None
+        export = None
+        mail_type = None
 
         # check to see what's available in our job description
         # to override defaults
@@ -479,6 +485,15 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
 
         if jd.attribute_exists("job_contact"):
             job_contact = jd.job_contact[0]
+        
+        if jd.attribute_exists("exclusive"):
+            exclusive = jd.exclusive
+        
+        if jd.attribute_exists("export"):
+            export = jd.export
+            
+        if jd.attribute_exists("mail_type"):
+            mail_type = jd.mail_type
 
         slurm_script = "#!/bin/sh\n\n"
 
@@ -487,7 +502,7 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
 
         if spmd_variation:
             pass #TODO
-
+        
         #### HANDLE NUMBER OF CORES
         # make sure we have something for total_cpu_count
         if not total_cpu_count:
@@ -514,8 +529,10 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
 
         slurm_script += "#SBATCH --ntasks=%s\n" % (number_of_processes)
 
-        if total_cpu_count != number_of_processes:
-            slurm_script += "#SBATCH --cpus-per-task=%s\n" % (total_cpu_count / number_of_processes)
+        slurm_script += "#SBATCH --cpus-per-task=%s\n" % (total_cpu_count / number_of_processes)
+
+#         if total_cpu_count != number_of_processes:
+#             slurm_script += "#SBATCH --cpus-per-task=%s\n" % (total_cpu_count / number_of_processes)
 
         if processes_per_host:
             slurm_script += "#SBATCH --ntasks-per-node=%s\n" % processes_per_host
@@ -548,7 +565,16 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
 
         if  job_contact:
             slurm_script += "#SBATCH --mail-user=%s\n" % job_contact
-
+        
+        if exclusive:
+            slurm_script += "#SBATCH --exclusive\n"
+            
+        if export:
+            slurm_script += "#SBATCH --export=%s\n" % export
+        
+        if mail_type:
+            slurm_script += "#SBATCH --mail-type=%s\n" % mail_type
+        
         # make sure we are not missing anything important
         if  not queue:
             raise saga.BadParameter._log (self._logger, 

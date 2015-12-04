@@ -219,8 +219,8 @@ class PTYShellFactory (object) :
 
         with self.rlock :
 
-            # import pprint
-            # pprint.pprint (info)
+#             import pprint
+#             pprint.pprint (info)
 
             shell_pass = info['pass']
             key_pass   = info['key_pass']
@@ -239,7 +239,7 @@ class PTYShellFactory (object) :
             # maximum 1 second (to keep startup time reasonable)
             # most one second.  We try to get within that range with 100*latency.
             delay = min (1.0, max (0.1, 50 * latency))
-
+            
             try :
                 prompt_patterns = ["[Pp]assword:\s*$",             # password   prompt
                                    "Enter passphrase for .*:\s*$", # passphrase prompt
