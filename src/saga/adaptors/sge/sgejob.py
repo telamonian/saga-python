@@ -761,7 +761,10 @@ class SGEJobService (saga.adaptors.cpi.job.Service):
     #
     # Adaptor internal methods
     #
-
+    
+    def _generate_submit_script(self, jd):
+        return self.__generate_qsub_script(jd)
+    
     def _job_run(self, jd):
         """
         Runs a job via qsub

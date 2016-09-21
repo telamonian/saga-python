@@ -224,9 +224,10 @@ class PTYShellFactory (object) :
 
             shell_pass = info['pass']
             key_pass   = info['key_pass']
-            prompt     = info['prompt']
+            prompt     =  info['prompt'] #r'.*[\$#%>\]](?:\s|(?:\]?133\d?;[A-Z]?))*$'
             logger     = info['logger']
             latency    = info['latency']
+            # totp_token = info['totp_token']
 
             pty_shell.latency = latency
 
@@ -246,8 +247,10 @@ class PTYShellFactory (object) :
                                    "Token_Response.*:\s*$",        # passtoken  prompt
                                    "Enter PASSCODE:$",             # RSA SecureID
                                    "want to continue connecting",  # hostkey confirmation
-                                   ".*HELLO_\\d+_SAGA$",           # prompt detection helper
-                                   prompt]                         # greedy native shell prompt
+                                   ".*HELLO_\\d+_SAGA$",           #".*HELLO_\d+_SAGA$.*",          # prompt detection helper
+                                   prompt,                         # greedy native shell prompt
+                                   'alksdjfalsdkfjalksjfgibberish',   #".*\]133;[A-Z].?\$.?\]133;[A-Z].{0,5}?",  # extra shell prompt to cope with iterm2 shell integration junk
+                                   "[Vv]erification code:\s*$"]    # totp prompt
 
                 # use a very aggressive, but portable prompt setting scheme.
                 # Error messages may appear for tcsh and others.  Excuse
@@ -290,7 +293,7 @@ class PTYShellFactory (object) :
                         if  not retry_trigger :
                             # just waiting for the *right* trigger or prompt,
                             # don't need new ones...
-                            continue
+                            pass
 
                         if posix:
                             # use a very aggressive, but portable prompt setting scheme
@@ -363,7 +366,7 @@ class PTYShellFactory (object) :
 
 
                     # --------------------------------------------------------------
-                    elif n == 6 :
+                    elif n == 6 or n == 7 :
 
                         logger.debug ("got initial shell prompt (%s) (%s)" %  (n, match))
 
@@ -402,6 +405,18 @@ class PTYShellFactory (object) :
                         logger.debug ("Got initial shell prompt (%s) (%s)" % (n, match))
                         # we are done waiting for a prompt
                         break
+
+                    # --------------------------------------------------------------
+                    elif n == 8 :
+                        logger.info ("got time based one time password prompt")
+                        if  not shell_pass :
+                            raise se.AuthenticationFailed ("prompted for unknown password (%s)" \
+                                                           % match)
+
+                        token, shell_pass = shell_pass.split('\n')
+                        pty_shell.write ("%s\n" % token, nolog=True)
+                        n, match = pty_shell.find (prompt_patterns, delay)
+
 
             except Exception as e :
                 raise ptye.translate_exception (e)

@@ -405,8 +405,8 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
     # ----------------------------------------------------------------
     #
     #
-    def _job_run (self, jd) :
-        """ runs a job on the wrapper via pty, and returns the job id """
+    def _generate_submit_script(self, jd):
+        """ generates the text of the .slurm script from jd """
         
         #define a bunch of default args
         exe = jd.executable
@@ -575,6 +575,9 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
         if mail_type:
             slurm_script += "#SBATCH --mail-type=%s\n" % mail_type
         
+        # HACK: fucking compute0500
+        slurm_script += "#SBATCH --exclude=%s\n" % 'compute0480,compute0500'    #,compute0153,compute0325,compute0287'
+        
         # make sure we are not missing anything important
         if  not queue:
             raise saga.BadParameter._log (self._logger, 
@@ -606,7 +609,13 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
             slurm_script += "\n## POST_EXEC\n"
             for cmd in post :
                 slurm_script += "%s\n" % cmd
-
+        
+        return slurm_script
+        
+    def _job_run(self, jd):
+        """ runs a job on the wrapper via pty, and returns the job id """
+        slurm_script = self._generate_submit_script(jd)
+        
         # try to create the working directory (if defined)
         # WRANING: this assumes a shared filesystem between login node and
         #           comnpute nodes.
@@ -621,10 +630,19 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
 
         # write script into a tmp file for staging
         self._logger.info ("SLURM script generated:\n%s" % slurm_script)
-
+        
         tgt = os.path.basename (tempfile.mktemp (suffix='.slurm', prefix='tmp_'))
         self.shell.write_to_remote (src=slurm_script, tgt=tgt)
-
+        
+#         # if desired (for rerunning, say), copy the submit script over to the working directory
+#         if jd.working_directory is not None:
+#             script_path = os.path.join(jd.working_directory, '.'.join([job_name,'slurm']))
+#             ret, out, _ = self.shell.run_sync("cp %s %s" % (tgt, script_path))
+#             if ret != 0:
+#                 # something went wrong
+#                 message = "Couldn't copy submit script to working directory - %s" % (out)
+#                 log_error_and_raise(message, saga.NoSuccess, self._logger)
+         
         # submit the job
         ret, out, _ = self.shell.run_sync ("sbatch '%s'; rm -vf '%s'" % (tgt, tgt))
 
