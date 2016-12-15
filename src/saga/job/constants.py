@@ -88,6 +88,10 @@ MAIL_TYPE             = 'MailType';            """ Notify user by email when
 # NTASKS_PER_NODE       = 'NTasksPerNode';       """ The number of (slurm) tasks
 #                                                    to run on each nodes """
 
+ARRAY                 = 'Array';               """ If Array is list of directories, runs
+                                                   the job as an array job where each
+                                                   directory is used as the cwd of one
+                                                   child job """
 
 ################################################################################
 # Job attributes:

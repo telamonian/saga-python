@@ -15,6 +15,7 @@ import saga.url as surl
 import saga.adaptors.base
 import saga.adaptors.cpi.job
 
+from itertools import chain
 import re
 import os
 import time
@@ -77,7 +78,8 @@ _ADAPTOR_CAPABILITIES  = {
                           saga.job.JOB_CONTACT,
                           saga.job.EXCLUSIVE, 
                           saga.job.EXPORT,
-                          saga.job.MAIL_TYPE],
+                          saga.job.MAIL_TYPE,
+                          saga.job.ARRAY],
 
     "job_attributes"   : [saga.job.EXIT_CODE,
                           saga.job.EXECUTION_HOSTS,
@@ -433,6 +435,7 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
         exclusive = None
         export = None
         mail_type = None
+        array = None
 
         # check to see what's available in our job description
         # to override defaults
@@ -495,6 +498,28 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
         if jd.attribute_exists("mail_type"):
             mail_type = jd.mail_type
 
+        if jd.attribute_exists("array"):
+            array = '0-%d' % (len(jd.array) - 1)  #','.join(['%d' % index for index in jd.array])
+
+            # sadly this just causes slurm to lose track of the job. Maybe there's some other way to accomplish this?
+            #child_job_rename = ['export SBATCH_JOB_NAME="foo"',]
+
+            workdirs_var = ['LOGDIR=${PWD}',
+                            'WORKDIRS=(%s)' % ' '.join(jd.array),]
+            child_job_setup = ['WORKDIR=${WORKDIRS[${SLURM_ARRAY_TASK_ID}]}',
+                               'scontrol update JobID=${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} name=${WORKDIR}',
+                               'printf "%20d, %6d, %s\n" ${SLURM_ARRAY_JOB_ID} ${SLURM_ARRAY_TASK_ID} ${WORKDIR} >> ${LOGDIR}/job_${SLURM_ARRAY_JOB_ID}.log',
+                               'mkdir -p ${WORKDIR}',
+                               'cd ${WORKDIR}',]
+            child_job_teardown = []
+            if output:
+                child_job_teardown += ['mv ${LOGDIR}/${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_-_%s ${WORKDIR}/%s' % (error,error),
+                                       'mv ${LOGDIR}/${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_-_%s ${WORKDIR}/%s' % (output,output),]
+
+            # make sure that WORKDIRS is initialized before any other pre_exec code
+            pre = list(chain(workdirs_var, child_job_setup)) if pre is None else list(chain(workdirs_var, pre, child_job_setup))
+            post = child_job_teardown if post is None else list(chain(post, child_job_teardown))
+
         slurm_script = "#!/bin/sh\n\n"
 
         if  job_name:
@@ -541,9 +566,17 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
             slurm_script += "#SBATCH -D %s\n" % cwd
 
         if  output:
+            if array:
+                # if we're running an array job, make sure that the outputs from the child jobs are unique
+                if '%a' not in output and '%A' not in output:
+                    output = '%A_%a_-_' + output
             slurm_script += "#SBATCH -o %s\n" % output
         
         if  error:
+            if array:
+                # if we're running an array job, make sure that the error outputs from the child jobs are unique
+                if '%a' not in error and '%A' not in error:
+                    error = '%A_%a_-_' + error
             slurm_script += "#SBATCH -e %s\n" % error
 
         if  wall_time_limit:
@@ -574,9 +607,12 @@ class SLURMJobService (saga.adaptors.cpi.job.Service) :
         
         if mail_type:
             slurm_script += "#SBATCH --mail-type=%s\n" % mail_type
-        
+
+        if array:
+            slurm_script += "#SBATCH --array=%s\n" % array
+
         # HACK: fucking compute0500
-        slurm_script += "#SBATCH --exclude=%s\n" % 'compute0480,compute0500'    #,compute0153,compute0325,compute0287'
+        slurm_script += "#SBATCH --exclude=%s\n" % 'compute0253,compute0480,compute0500'    #,compute0153,compute0325,compute0287'
         
         # make sure we are not missing anything important
         if  not queue:

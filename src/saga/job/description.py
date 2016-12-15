@@ -60,6 +60,7 @@ class Description (saga.Attributes) :
         self._attributes_register  (saga.job.EXCLUSIVE            , None, sa.BOOL,   sa.SCALAR, sa.WRITEABLE)
         self._attributes_register  (saga.job.EXPORT               , None, sa.STRING, sa.SCALAR, sa.WRITEABLE)
         self._attributes_register  (saga.job.MAIL_TYPE            , None, sa.STRING, sa.SCALAR, sa.WRITEABLE)
+        self._attributes_register  (saga.job.ARRAY                , None, sa.STRING, sa.VECTOR, sa.WRITEABLE)
       # self._attributes_set_enums (saga.job.SPMD_VARIATION,      ['MPI', 'OpenMP', 'MPICH-G'])
 
         self._env_is_list = False
